@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { ref, onValue, update } from "firebase/database";
 import { db } from "../../firebase";
 import {
   registerForPushNotifications,
   sendPushNotification,
 } from "../../lib/notifications";
+import { mockESP32SmokeAlert } from "../../lib/mockAlerts";
 
 export default function HomeScreen() {
  
@@ -103,6 +104,16 @@ export default function HomeScreen() {
           </Text>
         )}
       </View>
+
+      <TouchableOpacity
+        onPress={mockESP32SmokeAlert}
+        style={styles.testButton}
+      >
+        <Text style={styles.testButtonText}>
+          🔥 Simulate Smoke Alert
+        </Text>
+      </TouchableOpacity>
+
     </View>
   );
 }
@@ -146,4 +157,17 @@ const styles = StyleSheet.create({
     color: "#777",
     marginTop: 10,
   },
+    testButton: {
+    marginTop: 20,
+    backgroundColor: "#c0392b",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  testButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
 });
