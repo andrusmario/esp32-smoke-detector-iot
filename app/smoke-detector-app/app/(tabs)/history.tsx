@@ -5,8 +5,9 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, update } from "firebase/database";
 import { db } from "../../firebase";
 
 type AlertItem = {
@@ -16,6 +17,7 @@ type AlertItem = {
   message: string;
   timestamp: number;
   active?: boolean;
+  acknowledgedAt?: number;
 };
 
 export default function HistoryScreen() {
@@ -46,6 +48,18 @@ export default function HistoryScreen() {
     });
   }, []);
 
+  const acknowledgeAlert = async (alertId: string) => {
+    try {
+      const alertRef = ref(db, `alerts/${alertId}`);
+      await update(alertRef, {
+        active: false,
+        acknowledgedAt: Math.floor(Date.now() / 1000),
+      });
+    } catch (err) {
+      console.error("Failed to acknowledge alert", err);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -71,7 +85,12 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              item.active === false && styles.cardInactive,
+            ]}
+          >
             <Text style={styles.type}>
               🚨 {item.type}
             </Text>
@@ -83,12 +102,22 @@ export default function HistoryScreen() {
             <Text style={styles.time}>
               {new Date(item.timestamp * 1000).toLocaleString()}
             </Text>
+
+            {item.active && (
+              <TouchableOpacity
+                style={styles.ackButton}
+                onPress={() => acknowledgeAlert(item.id)}
+              >
+                <Text style={styles.ackText}>Acknowledge</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       />
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -111,6 +140,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  cardInactive: {
+    opacity: 0.6,
+    backgroundColor: "#eee",
+  },
   type: {
     fontSize: 16,
     fontWeight: "600",
@@ -124,6 +157,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#777",
     marginTop: 8,
+  },
+  ackButton: {
+    marginTop: 10,
+    backgroundColor: "#c0392b",
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  ackText: {
+    color: "#fff",
+    fontWeight: "600",
   },
   center: {
     flex: 1,
