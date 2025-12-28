@@ -14,6 +14,7 @@ export default function HomeScreen() {
 
     const unsubscribe = onValue(deviceRef, (snapshot) => {
       const data = snapshot.val();
+
       if (!data) return;
 
       setSmoke(data.smoke);
@@ -24,14 +25,26 @@ export default function HomeScreen() {
     return () => unsubscribe();
   }, []);
 
-  const statusText =
-    smoke === null
-      ? "Loading..."
-      : smoke
-      ? "SMOKE DETECTED"
-      : "SAFE";
+  const isSmoke = smoke === true;
+  const isOnline = online === true;
 
-  const statusColor = smoke ? "#e74c3c" : "#2ecc71";
+  let statusText = "Loading...";
+  let statusColor = "#999";
+
+  if (smoke !== null) {
+    if (isSmoke && isOnline) {
+      statusText = "🚨 ALERT";
+      statusColor = "#c0392b";
+    } else if (isSmoke && !isOnline) {
+      statusText = "⚠️ SMOKE (DEVICE OFFLINE)";
+      statusColor = "#f39c12";
+    } else {
+      statusText = "SAFE";
+      statusColor = "#2ecc71";
+    }
+  }
+
+
 
   return (
     <View style={styles.container}>
