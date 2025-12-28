@@ -1,7 +1,13 @@
 {
   "expo": {
-    "name": "smoke-detector-app",
-    "slug": "smoke-detector-app",
+    "name": "ESP32-Smoke-Detector",
+    "slug": "esp32-smoke-detector",
+    "extra": {
+      "eas": {
+        "projectId": "696e41aa-99fc-4c44-b782-751818a26949"
+      }
+    },
+
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

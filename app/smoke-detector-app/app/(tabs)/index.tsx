@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, update } from "firebase/database";
 import { db } from "../../firebase";
+import { registerForPushNotifications } from "../../lib/notifications";
 
 export default function HomeScreen() {
  
@@ -24,6 +25,23 @@ export default function HomeScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+  registerForPushNotifications().then(async (token) => {
+    if (!token) return;
+
+    console.log("Expo Push Token:", token);
+
+    const deviceRef = ref(db, "devices/device1");
+
+    await update(deviceRef, {
+      pushToken: token,
+      lastUpdated: Math.floor(Date.now() / 1000),
+    });
+  });
+}, []);
+
+
 
   const isSmoke = smoke === true;
   const isOnline = online === true;
