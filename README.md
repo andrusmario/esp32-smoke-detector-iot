@@ -65,7 +65,7 @@ To achieve this, the system was designed so the **mobile app and backend could b
 
 ### Alert History
 
-![](screenshots/history-alerts.png)
+<img src="screenshots/history-alerts.png" width="400">
 
 *All alerts are persisted in Firebase and displayed chronologically.*
 
@@ -73,7 +73,7 @@ To achieve this, the system was designed so the **mobile app and backend could b
 
 ### Push Notifications
 
-![](screenshots/notification.png)
+<img src="screenshots/notification.png" width="350">
 
 *Immediate user notification when smoke is detected.*
 
