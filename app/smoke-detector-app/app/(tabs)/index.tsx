@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { ref, onValue, update } from "firebase/database";
 import { db } from "../../firebase";
-import { registerForPushNotifications } from "../../lib/notifications";
+import {
+  registerForPushNotifications,
+  sendPushNotification,
+} from "../../lib/notifications";
 
 export default function HomeScreen() {
  
   const [smoke, setSmoke] = useState<boolean | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [prevSmoke, setPrevSmoke] = useState<boolean | null>(null);
+
 
   useEffect(() => {
     const deviceRef = ref(db, "devices/device1");
@@ -25,6 +30,20 @@ export default function HomeScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+  if (prevSmoke === null || smoke === null) {
+    setPrevSmoke(smoke);
+    return;
+  }
+
+  if (prevSmoke === false && smoke === true && online === true) {
+    console.log("🚨 ALERT triggered (notification handled by backend)");
+  }
+
+  setPrevSmoke(smoke);
+}, [smoke, online]);
+
 
   useEffect(() => {
   registerForPushNotifications().then(async (token) => {
