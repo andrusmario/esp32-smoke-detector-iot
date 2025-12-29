@@ -69,6 +69,6 @@ node_modules/
 .dataconnect
 
 # Firebase functions build output
-functions/lib
+functions/lib/
 
 

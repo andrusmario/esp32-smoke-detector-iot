@@ -42,7 +42,7 @@ To achieve this, the system was designed so the **mobile app and backend could b
 - Enables full end-to-end testing without hardware
 - Can be removed later with zero UI changes
 
-### 🔌 ESP32 Integration (Planned)
+### 🔌 ESP32 Integration (In Progress)
 - Smoke sensor input
 - Buzzer / alarm output
 - Wi-Fi connectivity
@@ -80,20 +80,41 @@ To achieve this, the system was designed so the **mobile app and backend could b
 ---
 
 ## 🧩 System Architecture
+
 ```
-ESP32 (or Simulator)
+ESP32 Device (or Simulator)
 │
+│ (Wi-Fi / HTTPS)
 ▼
 Firebase Realtime Database
 │
+├── Realtime Trigger
+│ ▼
+│ Cloud Functions (v2)
+│ ├─ sendSmokeAlert
+│ │ ├─ Rising-edge smoke detection
+│ │ ├─ Alert persistence
+│ │ └─ Push notification dispatch
+│ │
+│ └─ checkDeviceOffline (Scheduled)
+│ ├─ Runs every 1 minute
+│ ├─ Heartbeat validation
+│ └─ Backend-enforced offline detection
+│
 ▼
-React Native Mobile App
+React Native Mobile App (Expo)
+│
+├─ Live device status
+├─ Alert history
+└─ Push notifications
 ```
 **Design principles:**
 - ESP32 is the **source of truth** for smoke events  
-- Firebase RTDB acts as a **shared real-time state layer**  
-- Mobile app is **read-only for history**, **write-only for control**  
-- No tight coupling between hardware and UI  
+- Firebase RTDB is the **shared real-time state layer**  
+- Cloud Functions enforce **backend reliability**  
+- Offline detection is **not device-trusted**  
+- UI reflects **server-validated state only**  
+- Hardware and UI remain **loosely coupled**
 
 ---
 
@@ -115,8 +136,14 @@ ESP32-smoke-detector-iot/
 │ ├─ lib/
 │ │ └─ mockAlerts.ts # Simulated ESP32 (dev/testing)
 │ └─ firebase.ts # Firebase configuration
-├─ esp32/ # ESP32 firmware (planned)
-└─ functions/ # Optional backend logic (future)
+├─ esp32/ # ESP32 firmware (In progress)
+├─ functions/
+│ ├─ src/
+│ │ └─ index.ts # Cloud Functions (alerts + offline detection)
+│ └─ package.json
+└─ (functions/lib is intentionally gitignored)
+
+
 ```
 ---
 ## 🧪 Testing Strategy
@@ -162,14 +189,29 @@ This reduces debugging complexity and mirrors how real IoT systems are developed
 - Expo Push Notifications
 - TypeScript
 - Git & GitHub
+- Firebase Cloud Functions (v2)
+- Cloud Scheduler
+
 
 ## 🧭 Future Improvements
 - ESP32 hardware deployment
 - Remote alarm enable / disable from mobile app
 - Multi-device support
 - Alert severity levels
+- Offline push notifications
+- Alert auto-resolution
 - Secure Firebase RTDB rules
-- Optional Cloud Functions for advanced notifications
+
+
+## 🏷️ Versioning
+
+- **v1.0.0**
+  - Smoke detection via ESP32 / simulator
+  - Persistent alert lifecycle
+  - Push notifications
+  - Backend offline detection (Cloud Scheduler)
+  - Firebase Functions v2
+
 
 ## ⚠️ Disclaimer
 This project is for educational and experimental purposes only and is not a certified safety device.
