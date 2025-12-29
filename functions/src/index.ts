@@ -1,10 +1,9 @@
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onValueUpdated } from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
+import fetch from "node-fetch";
 
-setGlobalOptions({
-  region: "europe-west1",
-});
+setGlobalOptions({ region: "europe-west1" });
 
 admin.initializeApp();
 
@@ -23,18 +22,17 @@ export const sendSmokeAlert = onValueUpdated(
 
     if (!smokeTriggered) return;
 
-    const pushToken = after.pushToken;
-    if (!pushToken) {
-      console.log("No push token found");
-      return;
-    }
+    // 🔥 WRITE ALERT
+    await admin.database().ref("alerts").push({
+      deviceId: event.params.deviceId,
+      type: "SMOKE",
+      message: "Smoke detected",
+      active: true,
+      timestamp: Math.floor(Date.now() / 1000),
+    });
 
-    const message = {
-      to: pushToken,
-      sound: "default",
-      title: "🚨 Smoke Detected",
-      body: "Smoke detected by your ESP32 device",
-    };
+    const pushToken = after.pushToken;
+    if (!pushToken) return;
 
     await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
@@ -43,7 +41,12 @@ export const sendSmokeAlert = onValueUpdated(
         "Accept-encoding": "gzip, deflate",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(message),
+      body: JSON.stringify({
+        to: pushToken,
+        sound: "default",
+        title: "🚨 Smoke Detected",
+        body: "Smoke detected by your ESP32 device",
+      }),
     });
 
     console.log(`🚨 Smoke alert sent for ${event.params.deviceId}`);
