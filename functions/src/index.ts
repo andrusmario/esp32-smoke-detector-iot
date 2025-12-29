@@ -1,7 +1,7 @@
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onValueUpdated } from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
-import fetch from "node-fetch";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 setGlobalOptions({ region: "europe-west1" });
 
@@ -50,5 +50,27 @@ export const sendSmokeAlert = onValueUpdated(
     });
 
     console.log(`🚨 Smoke alert sent for ${event.params.deviceId}`);
+  }
+);
+export const checkDeviceOffline = onSchedule(
+  {
+    schedule: "every 1 minutes",
+    region: "europe-west1",
+  },
+  async () => {
+    const now = Math.floor(Date.now() / 1000);
+
+    const snapshot = await admin.database().ref("devices").once("value");
+
+    snapshot.forEach((child) => {
+      const device = child.val();
+      const lastUpdated = device?.lastUpdated ?? 0;
+
+      // Mark offline if no heartbeat for 60s
+      if (now - lastUpdated > 60 && device.online === true) {
+        console.log(`🔌 Device ${child.key} offline`);
+        admin.database().ref(`devices/${child.key}/online`).set(false);
+      }
+    });
   }
 );
