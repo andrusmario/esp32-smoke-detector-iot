@@ -37,17 +37,31 @@ void setup() {
   // Time (for timestamps)
   configTime(0, 0, "pool.ntp.org");
 
-  // Firebase
-  config.api_key = API_KEY;
-  config.database_url = DATABASE_URL;
+// Firebase
+config.api_key = API_KEY;
+config.database_url = DATABASE_URL;
 
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
-
-  Serial.println("Firebase connected");
+if (!Firebase.signUp(&config, &auth, "", "")) {
+  Serial.print("❌ signUp failed: ");
+  Serial.println(config.signer.signupError.message.c_str());
+  return;
 }
 
-// ================= LOOP =================
+Serial.println("✅ signUp OK");
+
+Firebase.begin(&config, &auth);
+Firebase.reconnectWiFi(true);
+
+// Wait for token
+Serial.print("Getting token");
+while (auth.token.uid == "") {
+  Serial.print(".");
+  delay(300);
+}
+Serial.println("\n✅ Token ready");
+
+}
+
 void loop() {
   int sensorValue = analogRead(MQ2_PIN);
   bool smokeDetected = sensorValue > SMOKE_THRESHOLD;
@@ -57,7 +71,13 @@ void loop() {
   Serial.print(" | Smoke: ");
   Serial.println(smokeDetected);
 
-  // ---- Update live device state ----
+  // ---- Device heartbeat ----
+  Firebase.RTDB.setBool(
+    &fbdo,
+    "/devices/" DEVICE_ID "/online",
+    true
+  );
+
   Firebase.RTDB.setBool(
     &fbdo,
     "/devices/" DEVICE_ID "/smoke",
@@ -75,19 +95,6 @@ void loop() {
     "/devices/" DEVICE_ID "/lastUpdated",
     time(nullptr)
   );
-
-  // ---- Create alert ONLY on rising edge ----
-  if (smokeDetected && !lastSmokeState) {
-    FirebaseJson alert;
-    alert.set("deviceId", DEVICE_ID);
-    alert.set("type", "SMOKE");
-    alert.set("message", "Smoke detected");
-    alert.set("active", true);
-    alert.set("timestamp", time(nullptr));
-
-    Firebase.RTDB.pushJSON(&fbdo, "/alerts", &alert);
-    Serial.println("🔥 Smoke alert pushed");
-  }
 
   lastSmokeState = smokeDetected;
   delay(1000);
