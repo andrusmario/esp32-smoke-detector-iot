@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { registerForPushNotifications } from "../lib/notifications";
 import * as Notifications from "expo-notifications";
-
+import { getAuth, signInAnonymously } from "firebase/auth";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -16,8 +16,18 @@ Notifications.setNotificationHandler({
 
 export default function RootLayout() {
   useEffect(() => {
-    registerForPushNotifications();
-  }, []);
+  const auth = getAuth();
+
+  signInAnonymously(auth)
+    .then(() => {
+      console.log("✅ Firebase anonymous auth success");
+      registerForPushNotifications();
+    })
+    .catch((err) => {
+      console.error("❌ Firebase auth failed", err);
+    });
+}, []);
+
 
   return (
     <Stack>
